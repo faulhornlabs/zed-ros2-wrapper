@@ -20,12 +20,12 @@ IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
-if(CMAKE_BUILD_TYPE MATCHES Release )
+if(CMAKE_BUILD_TYPE MATCHES Release AND NOT MSVC )
     #message(" * Release Mode")
     add_compile_options(-Wno-deprecated-declarations)
 endif()
 
-if(CMAKE_BUILD_TYPE MATCHES RelWithDebInfo )
+if(CMAKE_BUILD_TYPE MATCHES RelWithDebInfo AND NOT MSVC)
     #message(" * Release with Debug Info Mode")
     add_compile_options(-Wno-deprecated-declarations)
 endif()
@@ -43,7 +43,7 @@ if ( CMAKE_SYSTEM_NAME2 MATCHES "aarch64" ) # Jetson TX
     SET(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
 endif()
 
-find_package(CUDA REQUIRED)
+find_package(CUDAToolkit REQUIRED)
 
 set(DEPENDENCIES
     rclcpp
@@ -109,8 +109,12 @@ endif()
 
 set(ZED_LIBS
   ${ZED_LIBRARIES}
-  ${CUDA_LIBRARIES} ${CUDA_NPP_LIBRARIES_ZED}
+  ${CUDA_LIBRARIES} ${CUDA_CUDA_LIBRARY} ${CUDA_NPP_LIBRARIES_ZED}
 )
+if(TARGET CUDA::cuda_driver)
+  list(APPEND ZED_LIBS CUDA::cuda_driver CUDA::cudart)
+endif()
+
 
 ###############################################################################
 # SOURCES
