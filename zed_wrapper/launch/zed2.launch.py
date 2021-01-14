@@ -3,7 +3,8 @@ import os
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
-
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     # Define LaunchDescription variable
@@ -50,6 +51,8 @@ def generate_launch_description():
         arguments=[urdf],
     )
 
+    svo_file_arg = DeclareLaunchArgument('svo_file', default_value='', description='Launch zed with the specified svo file')
+
     # ZED Wrapper node
     zed_wrapper_node = Node(
         package='zed_wrapper',
@@ -58,6 +61,7 @@ def generate_launch_description():
         name='zed_node',
         output='screen',
         parameters=[
+            {'general.svo_file' : LaunchConfiguration('svo_file')},
             config_common,  # Common parameters
             config_camera,  # Camera related parameters
         ]
@@ -65,6 +69,7 @@ def generate_launch_description():
 
     # Add nodes to LaunchDescription
     ld.add_action(rsp_node)
+    ld.add_action(svo_file_arg)
     ld.add_action(zed_wrapper_node)
 
     return ld

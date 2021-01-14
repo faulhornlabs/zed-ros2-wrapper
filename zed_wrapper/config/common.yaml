@@ -7,7 +7,7 @@
 /**:
     ros__parameters:
         general:
-            svo_file:                   ''
+            #svo_file:                   'd:/datasets/zed2/0112/20210112_Budafoki_irodabol_80cm_loopclose.svo'
             svo_loop:                   false                               # Enable loop mode when using an SVO as input source
             svo_realtime:               false                               # if true SVO will be played trying to respect the original framerate eventually skipping frames, otherwise every frame will be processed respecting the `pub_frame_rate` setting
             debug_mode:                 false
