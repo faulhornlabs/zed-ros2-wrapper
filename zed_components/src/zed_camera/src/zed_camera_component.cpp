@@ -30,7 +30,7 @@
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <sensor_msgs/msg/point_field.hpp>
-
+#include <rclcpp/node_interfaces/node_parameters_interface.hpp>
 #include <rclcpp/time.hpp>
 
 using namespace std::chrono_literals;
@@ -267,7 +267,8 @@ void ZedCamera::initParameters() {
     getOdParams();
 
     // Dynamic parameters callback
-    set_on_parameters_set_callback(std::bind(&ZedCamera::callback_paramChange, this, _1));
+    add_on_set_parameters_callback(std::bind(&ZedCamera::callback_paramChange, this, _1));
+    //set_on_parameters_set_callback(std::bind(&ZedCamera::callback_paramChange, this, _1));
 }
 
 void ZedCamera::getGeneralParams() {
