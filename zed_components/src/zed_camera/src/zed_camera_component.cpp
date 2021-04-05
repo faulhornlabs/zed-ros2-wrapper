@@ -2017,11 +2017,11 @@ bool ZedCamera::startCamera() {
 
     // Initialialized timestamp to avoid wrong initial data
     // ----> Timestamp
-    if (mSvoMode) {
-        mFrameTimestamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::CURRENT));
-    } else {
+    //if (mSvoMode) {
+        //mFrameTimestamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::CURRENT));
+    //} else {
         mFrameTimestamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::IMAGE));
-    }
+    //}
     // <---- Timestamp
 
     // ----> Initialize Diagnostic statistics
@@ -2790,11 +2790,11 @@ void ZedCamera::threadFunc_zedGrab() {
             mFrameCount++;
 
             // ----> Timestamp
-            if (mSvoMode) {
-                mFrameTimestamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::CURRENT));
-            } else {
+            //if (mSvoMode) {
+                //mFrameTimestamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::CURRENT));
+            //} else {
                 mFrameTimestamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::IMAGE));
-            }
+            //}
             // <---- Timestamp
 
             // ----> Check recording status
@@ -3565,11 +3565,11 @@ bool ZedCamera::publishVideoDepth( rclcpp::Time& out_pub_ts) {
     // <---- Check if a grab has been done before publishing the same images
 
     rclcpp::Time timeStamp;
-    if(!mSvoMode) {
+    //if(!mSvoMode) {
         timeStamp = sl_tools::slTime2Ros(grab_ts,get_clock()->get_clock_type());
-    } else {
-        timeStamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::CURRENT),get_clock()->get_clock_type());
-    }
+    //} else {
+        //timeStamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::CURRENT),get_clock()->get_clock_type());
+    //}
 
     out_pub_ts = timeStamp;
 
@@ -4341,11 +4341,11 @@ void ZedCamera::publishPointCloud() {
 
     int ptsCount = width * height;
 
-    if(!mSvoMode) {
+    //if(!mSvoMode) {
         pcMsg->header.stamp = sl_tools::slTime2Ros(mMatCloud.timestamp);
-    } else {
-        pcMsg->header.stamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::CURRENT));;
-    }
+    //} else {
+        //pcMsg->header.stamp = sl_tools::slTime2Ros(mZed.getTimestamp(sl::TIME_REFERENCE::CURRENT));;
+    //}
 
     if (pcMsg->width != width || pcMsg->height != height) {
         pcMsg->header.frame_id = mPointCloudFrameId; // Set the header values of the ROS message
