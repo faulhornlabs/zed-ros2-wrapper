@@ -37,7 +37,7 @@ endif()
 #############################################
 # Dependencies
 find_package(ZED 3 REQUIRED)
-find_package(CUDA REQUIRED)
+#find_package(CUDA REQUIRED)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
