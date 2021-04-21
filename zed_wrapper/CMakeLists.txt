@@ -37,7 +37,9 @@ endif()
 #############################################
 # Dependencies
 find_package(ZED 3 REQUIRED)
-#find_package(CUDA REQUIRED)
+if (MSVC)
+    find_package(CUDA REQUIRED)
+endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)

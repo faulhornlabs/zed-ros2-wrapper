@@ -343,6 +343,7 @@ private:
     int mDepthConf = 50;
     int mDepthTextConf = 100;
     double mDepthDownsampleFactor = 1.0;
+    double mDepthScaleFactor = 1.0;
     double mDepthPubRate = 15.0;
     double mPcPubRate = 15.0;
     double mFusedPcPubRate = 1.0;

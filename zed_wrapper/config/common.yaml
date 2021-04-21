@@ -47,6 +47,8 @@
             depth_stabilization:        true
             openni_depth_mode:          true                                # 'false': 32bit float [meters], 'true': 16bit unsigned int [millimeters]
             depth_downsample_factor:    1.0                                 # Resample factor for depth data matrices [0.01,1.0] The SDK works with native data sizes, but publishes rescaled matrices (depth map, point cloud, ...)
+            depth_scale_factor:         1.0                                 # scale depth values by this scalar
+#            depth_scale_factor:         0.924664                           # scale depth values by this scalar, 
             point_cloud_freq:           10.0                                # [DYNAMIC] - frequency of the pointcloud publishing (equal or less to `grab_frame_rate` value)
             depth_confidence:           50                                  # [DYNAMIC]
             depth_texture_conf:         100                                 # [DYNAMIC]

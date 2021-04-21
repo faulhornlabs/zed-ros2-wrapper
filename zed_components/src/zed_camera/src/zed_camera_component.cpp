@@ -454,6 +454,9 @@ void ZedCamera::getDepthParams() {
     }
     RCLCPP_INFO(get_logger(), " * Depth downsample factor: %g ", mDepthDownsampleFactor);
 
+    getParam("depth.depth_scale_factor", mDepthScaleFactor, mDepthScaleFactor);
+    RCLCPP_INFO(get_logger(), " * Depth scale factor: %g ", mDepthScaleFactor);
+
     int depth_quality = static_cast<int>(mDepthQuality);
     getParam( "depth.quality", depth_quality, depth_quality );
     mDepthQuality = static_cast<sl::DEPTH_MODE>(depth_quality);
@@ -4301,7 +4304,7 @@ void ZedCamera::publishDepthMapWithInfo(sl::Mat& depth, rclcpp::Time t, image_tr
     sl::float1* depthDataPtr = depth.getPtr<sl::float1>();
 
     for (int i = 0; i < dataSize; i++) {
-        *(data++) = static_cast<uint16_t>(std::round(*(depthDataPtr++) * 1000));    // in mm, rounded
+        *(data++) = static_cast<uint16_t>(std::round(*(depthDataPtr++) * 1000 * mDepthScaleFactor));    // in mm, rounded
     }
 
     publisher.publish( openniDepthMsg, mDepthCamInfoMsg );
