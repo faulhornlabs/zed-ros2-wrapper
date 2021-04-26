@@ -197,7 +197,7 @@ protected:
                               image_transport::CameraPublisher& pubImg,
                               camInfoMsgPtr& camInfoMsg,
                               std::string imgFrameId, rclcpp::Time t);
-    void publishDepthMapWithInfo(sl::Mat &depth, rclcpp::Time t);
+    void publishDepthMapWithInfo(sl::Mat &depth, rclcpp::Time t, image_transport::CameraPublisher& publisher);
     void publishDisparity(sl::Mat disparity, rclcpp::Time t);
     void publishPointCloud();
     void publishStaticImuFrameAndTopic();
@@ -315,6 +315,7 @@ private:
     bool mObjDetFruitsEnable = true;
     bool mBodyFitting = false;
     sl::DETECTION_MODEL mObjDetModel = sl::DETECTION_MODEL::HUMAN_BODY_FAST;
+
     // QoS parameters
     // https://github.com/ros2/ros2/wiki/About-Quality-of-Service-Settings
     rclcpp::QoS mVideoQos;
@@ -386,6 +387,7 @@ private:
     int mCamHeight; // Camera frame height
     sl::Resolution mMatResolVideo;
     sl::Resolution mMatResolDepth;
+    sl::Resolution mMatResolLowRes  = sl::Resolution(640,320);
     // <---- Stereolabs Mat Info
 
     // Camera IMU transform
@@ -432,10 +434,12 @@ private:
     image_transport::CameraPublisher mPubRgb; //
     image_transport::CameraPublisher mPubRawRgb; //
     image_transport::CameraPublisher mPubLeft; //
+    image_transport::CameraPublisher mPubLeftLowRes; // For vizualization
     image_transport::CameraPublisher mPubRawLeft; //
     image_transport::CameraPublisher mPubRight; //
     image_transport::CameraPublisher mPubRawRight; //
     image_transport::CameraPublisher mPubDepth; //
+    image_transport::CameraPublisher mPubDepthLowRes; // For vizualization
     image_transport::Publisher mPubStereo; //
     image_transport::Publisher mPubRawStereo; //
 

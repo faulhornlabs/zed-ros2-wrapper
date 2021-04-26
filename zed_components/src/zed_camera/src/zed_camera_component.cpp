@@ -535,6 +535,13 @@ void ZedCamera::getDepthParams() {
     }
 
     RCLCPP_INFO(get_logger(), " * Depth QoS Durability: %s", sl_tools::qos2str(qos_durability).c_str());
+
+    // ------------------------------------------
+    int width=0;
+    int height=0;
+    getParam( "low_res.width", static_cast<int32_t>(mMatResolLowRes.width), width, " * Width of low resolution images: ");
+    getParam( "low_res.height", static_cast<int32_t>(mMatResolLowRes.height), height, " * Height of low resolution images: ");
+    mMatResolLowRes = sl::Resolution(width, height);
 }
 
 void ZedCamera::getSensorsParams() {
@@ -1591,7 +1598,9 @@ void ZedCamera::initPublishers() {
     std::string img_gray_topic = "/image_rect_gray";
     std::string img_raw_gray_topic_ = "/image_raw_gray";
     std::string raw_suffix = "_raw";
+    std::string low_res_suffix = "/low_res";
     std::string left_topic = mTopicRoot + leftTopicRoot + img_topic;
+    std::string left_low_res_topic =  mTopicRoot + leftTopicRoot + img_topic + low_res_suffix;
     std::string left_raw_topic = mTopicRoot + leftTopicRoot + raw_suffix + img_raw_topic;
     std::string right_topic = mTopicRoot + rightTopicRoot + img_topic;
     std::string right_raw_topic = mTopicRoot + rightTopicRoot + raw_suffix + img_raw_topic;
@@ -1616,6 +1625,7 @@ void ZedCamera::initPublishers() {
         RCLCPP_INFO_STREAM( get_logger(), "Openni depth mode activated -> Units: mm, Encoding: MONO16");
     }
     std::string depth_topic = mTopicRoot + depth_topic_root + "/depth_registered";
+    std::string depth_low_res_topic = mTopicRoot + depth_topic_root + "/depth_registered" + low_res_suffix;
 
     std::string pointcloud_topic = mTopicRoot + "point_cloud/cloud_registered";
     mPointcloudFusedTopic = mTopicRoot + "mapping/fused_cloud";
@@ -1667,6 +1677,8 @@ void ZedCamera::initPublishers() {
     RCLCPP_INFO_STREAM( get_logger(), "Advertised on topic: " << mPubRawRgb.getInfoTopic());
     mPubLeft = image_transport::create_camera_publisher( this, left_topic, mVideoQos.get_rmw_qos_profile() );
     RCLCPP_INFO_STREAM( get_logger(), "Advertised on topic: " << mPubLeft.getTopic());
+    mPubLeftLowRes = image_transport::create_camera_publisher( this, left_low_res_topic, mVideoQos.get_rmw_qos_profile() );
+    RCLCPP_INFO_STREAM( get_logger(), "Advertised on topic: " << mPubLeft.getTopic());
     mPubLeftGray = image_transport::create_camera_publisher( this, left_gray_topic, mVideoQos.get_rmw_qos_profile() );
     RCLCPP_INFO_STREAM( get_logger(), "Advertised on topic: " << mPubLeftGray.getTopic());
     RCLCPP_INFO_STREAM( get_logger(), "Advertised on topic: " << mPubLeft.getInfoTopic());
@@ -1689,6 +1701,9 @@ void ZedCamera::initPublishers() {
     mPubDepth = image_transport::create_camera_publisher( this, depth_topic, mDepthQos.get_rmw_qos_profile() );
     RCLCPP_INFO_STREAM( get_logger(), "Advertised on topic: " << mPubDepth.getTopic());
     RCLCPP_INFO_STREAM( get_logger(), "Advertised on topic: " << mPubDepth.getInfoTopic());
+    mPubDepthLowRes = image_transport::create_camera_publisher( this, depth_low_res_topic, mDepthQos.get_rmw_qos_profile() );
+    RCLCPP_INFO_STREAM( get_logger(), "Advertised on topic: " << mPubDepthLowRes.getTopic());
+    RCLCPP_INFO_STREAM( get_logger(), "Advertised on topic: " << mPubDepthLowRes.getInfoTopic());
 
     mPubStereo = image_transport::create_publisher( this, stereo_topic, mVideoQos.get_rmw_qos_profile() );
     RCLCPP_INFO_STREAM( get_logger(), "Advertised on topic: " << mPubStereo.getTopic());
@@ -3386,6 +3401,7 @@ bool ZedCamera::publishVideoDepth( rclcpp::Time& out_pub_ts) {
     size_t rgbGraySubnumber = 0;
     size_t rgbGrayRawSubnumber = 0;
     size_t leftSubnumber = 0;
+    size_t leftLowResSubnumber = 0;
     size_t leftRawSubnumber = 0;
     size_t leftGraySubnumber = 0;
     size_t leftGrayRawSubnumber = 0;
@@ -3396,6 +3412,7 @@ bool ZedCamera::publishVideoDepth( rclcpp::Time& out_pub_ts) {
     size_t stereoSubnumber = 0;
     size_t stereoRawSubnumber = 0;
     size_t depthSubnumber = 0;
+    size_t depthLowResSubnumber = 0;
     size_t confMapSubnumber = 0;
     size_t disparitySubnumber = 0;
 
@@ -3405,6 +3422,7 @@ bool ZedCamera::publishVideoDepth( rclcpp::Time& out_pub_ts) {
         rgbGraySubnumber = count_subscribers(mPubRgbGray.getTopic());
         rgbGrayRawSubnumber = count_subscribers(mPubRawRgbGray.getTopic());
         leftSubnumber = count_subscribers(mPubLeft.getTopic());
+        leftLowResSubnumber = count_subscribers(mPubLeftLowRes.getTopic());
         leftRawSubnumber = count_subscribers(mPubRawLeft.getTopic());
         leftGraySubnumber = count_subscribers(mPubLeftGray.getTopic());
         leftGrayRawSubnumber = count_subscribers(mPubRawLeftGray.getTopic());
@@ -3415,6 +3433,7 @@ bool ZedCamera::publishVideoDepth( rclcpp::Time& out_pub_ts) {
         stereoSubnumber = count_subscribers(mPubStereo.getTopic());
         stereoRawSubnumber = count_subscribers(mPubRawStereo.getTopic());
         depthSubnumber = count_subscribers(mPubDepth.getTopic());
+        depthLowResSubnumber = count_subscribers(mPubDepthLowRes.getTopic());
         confMapSubnumber = count_subscribers(mPubConfMap->get_topic_name());
         disparitySubnumber = count_subscribers(mPubDisparity->get_topic_name());
     }
@@ -3427,10 +3446,12 @@ bool ZedCamera::publishVideoDepth( rclcpp::Time& out_pub_ts) {
     bool retrieved = false;
 
     sl::Mat mat_left,mat_left_raw;
+    sl::Mat mat_left_low_res;
     sl::Mat mat_right,mat_right_raw;
     sl::Mat mat_left_gray,mat_left_raw_gray;
     sl::Mat mat_right_gray,mat_right_raw_gray;
     sl::Mat mat_depth,mat_disp,mat_conf;
+    sl::Mat mat_depth_low_res;
 
     sl::Timestamp ts_rgb=0;       // used to check RGB/Depth sync
     sl::Timestamp ts_depth=0;     // used to check RGB/Depth sync
@@ -3445,6 +3466,11 @@ bool ZedCamera::publishVideoDepth( rclcpp::Time& out_pub_ts) {
             retrieved = true;
             ts_rgb=mat_left.timestamp;
             grab_ts=mat_left.timestamp;
+        }
+        if(leftLowResSubnumber>0) {
+            mZed.retrieveImage(mat_left_low_res, sl::VIEW::LEFT, sl::MEM::CPU, mMatResolLowRes);
+            retrieved = true;
+            grab_ts=mat_left_low_res.timestamp;
         }
         if(rgbRawSubnumber+leftRawSubnumber+stereoRawSubnumber>0) {
             mZed.retrieveImage(mat_left_raw, sl::VIEW::LEFT_UNRECTIFIED, sl::MEM::CPU, mMatResolVideo);
@@ -3491,6 +3517,11 @@ bool ZedCamera::publishVideoDepth( rclcpp::Time& out_pub_ts) {
             if( ts_rgb.data_ns!=0 && (ts_depth.data_ns!=ts_rgb.data_ns) ) {
                 RCLCPP_WARN_STREAM(get_logger(), "!!!!! DEPTH/RGB ASYNC !!!!! - Delta: " << 1e-9*static_cast<double>(ts_depth-ts_rgb) << " sec");
             }
+        }
+        if(depthLowResSubnumber>0) {
+            mZed.retrieveMeasure(mat_depth_low_res, sl::MEASURE::DEPTH, sl::MEM::CPU, mMatResolLowRes);
+            retrieved = true;
+            grab_ts=mat_depth_low_res.timestamp;
         }
         if(disparitySubnumber>0) {
             mZed.retrieveMeasure(mat_disp, sl::MEASURE::DISPARITY, sl::MEM::CPU, mMatResolDepth);
@@ -3550,6 +3581,12 @@ bool ZedCamera::publishVideoDepth( rclcpp::Time& out_pub_ts) {
         publishImageWithInfo(mat_left, mPubRgb, mRgbCamInfoMsg, mDepthOptFrameId, timeStamp);
     }
     // <---- Publish the left=rgb image if someone has subscribed to
+
+    // ----> Publish the left=rgb low resolution image if someone has subscribed to
+    if (leftLowResSubnumber > 0) {
+        publishImageWithInfo(mat_left_low_res, mPubLeftLowRes, mLeftCamInfoMsg, mLeftCamOptFrameId, timeStamp);
+    }
+    // <---- Publish the left=rgb low resolution image if someone has subscribed to
 
     // ----> Publish the left_raw=rgb_raw image if someone has subscribed to
     if (leftRawSubnumber > 0) {
@@ -3618,9 +3655,15 @@ bool ZedCamera::publishVideoDepth( rclcpp::Time& out_pub_ts) {
 
     // ---->  Publish the depth image if someone has subscribed to
     if (depthSubnumber > 0) {
-        publishDepthMapWithInfo(mat_depth, timeStamp);
+        publishDepthMapWithInfo(mat_depth, timeStamp, mPubDepth);
     }
     // <----  Publish the depth image if someone has subscribed to
+
+    // ---->  Publish the depth low res image if someone has subscribed to
+    if (depthLowResSubnumber > 0) {
+        publishDepthMapWithInfo(mat_depth_low_res, timeStamp, mPubDepthLowRes);
+    }
+    // <----  Publish the depth low res image if someone has subscribed to
 
     // ---->  Publish the confidence image and map if someone has subscribed to
     if (confMapSubnumber > 0) {
@@ -4102,7 +4145,8 @@ bool ZedCamera::isDepthRequired() {
         topics_sub = count_subscribers(mPubDepth.getTopic())
                 + count_subscribers(mPubConfMap->get_topic_name())
                 + count_subscribers(mPubDisparity->get_topic_name())
-                + count_subscribers(mPubCloud->get_topic_name());
+                + count_subscribers(mPubCloud->get_topic_name())
+                + count_subscribers(mPubDepthLowRes.getTopic());
     }
     catch(...) {
         rcutils_reset_error();
@@ -4224,13 +4268,13 @@ bool ZedCamera::isPosTrackingRequired() {
     return false;
 }
 
-void ZedCamera::publishDepthMapWithInfo(sl::Mat& depth, rclcpp::Time t) {
+void ZedCamera::publishDepthMapWithInfo(sl::Mat& depth, rclcpp::Time t, image_transport::CameraPublisher& publisher) {
 
     mDepthCamInfoMsg->header.stamp = t;
 
     if (!mOpenniDepthMode) {
         auto depth_img = sl_tools::imageToROSmsg(depth, mDepthOptFrameId, t);
-        mPubDepth.publish( depth_img, mDepthCamInfoMsg ); // TODO CHECK FOR ZERO-COPY
+        publisher.publish( depth_img, mDepthCamInfoMsg ); // TODO CHECK FOR ZERO-COPY
         return;
     }
 
@@ -4260,7 +4304,7 @@ void ZedCamera::publishDepthMapWithInfo(sl::Mat& depth, rclcpp::Time t) {
         *(data++) = static_cast<uint16_t>(std::round(*(depthDataPtr++) * 1000));    // in mm, rounded
     }
 
-    mPubDepth.publish( openniDepthMsg, mDepthCamInfoMsg );
+    publisher.publish( openniDepthMsg, mDepthCamInfoMsg );
 }
 
 void ZedCamera::publishDisparity(sl::Mat disparity, rclcpp::Time t) {
